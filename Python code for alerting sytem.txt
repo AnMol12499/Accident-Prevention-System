@@ -50,7 +50,7 @@ def currentloc():   #for calculating current location of accident
     chrome_options.add_argument("--use-fake-ui-for-media-stream")
     timeout = 30
     print('\007')
-    driver = webdriver.Chrome("/Users/harsimranwadali/Documents/chromedriver")
+    driver = webdriver.Chrome("/Users/XXXX/chromedriver")
     driver.get("https://mycurrentlocation.net/")
     wait = WebDriverWait(driver, timeout)
     time.sleep(2)
@@ -66,7 +66,7 @@ def currentloc():   #for calculating current location of accident
    
 
 def nearestdist(origin):   #for finding nearest hospital from current location
-    df1=pd.read_csv("database2.csv")
+    df1=pd.read_csv("HOSPITAL_LAT_LONG_DEMO.csv")
     print(df1)
     lats=list(df1['LATITUDE'])
     longs=list(df1['LONGITUDE'])
