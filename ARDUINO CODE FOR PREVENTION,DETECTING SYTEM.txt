@@ -1,0 +1,234 @@
+#include <LiquidCrystal.h>
+const int rs = 14, en = 12, d4 =11 , d5 = 10, d6 = 8,d7 = 7;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+const int trigPin = 2;
+const int echoPin = 4;
+int a=0;
+
+const int buttonPin = 5;    
+const int buttonPin1 = 13;  
+int buttonState = 0; 
+int buttonState1= 0;
+long duration;
+int distance;
+
+int value;
+const int AOUTpin=15;//the AOUT pin of the alcohol sensor goes into analog pin A0 of the arduino
+
+const int ledPin=12;
+
+void setup() {
+  // put your setup code here, to run once:
+pinMode(3,OUTPUT);
+pinMode(9,OUTPUT);
+pinMode(6,OUTPUT);
+pinMode(13,OUTPUT);//buzzer
+pinMode(2,OUTPUT); //TRIG
+pinMode(4,INPUT);//ECHP
+pinMode(buttonPin, INPUT);
+pinMode(buttonPin1, INPUT);
+pinMode(AOUTpin, INPUT_PULLUP);
+lcd.begin(16, 2);
+lcd.setCursor(0,0);
+lcd.print("ACC:");
+lcd.setCursor(10,0);
+lcd.print("Speed:"); 
+
+Serial.begin(9600);
+}
+void loop() {
+  value= analogRead(AOUTpin);
+Serial.println(value);//reads the analaog value from the alcohol sensor's AOUT pin
+//limit= digitalRead(DOUTpin);//reads the digital value from the alcohol sensor's DOUT pin
+
+int t=constrain(value,100,111);
+t=map(t,100,111,0,100);
+Serial.print("Alcohol value: ");
+Serial.println(t);
+//prints the alcohol value
+
+
+delay(1000);
+
+ if (t<=50)
+ {Serial.println("DRUNK");
+ while(1)
+ {}
+ //normal car code
+ }
+ else{
+  int l=analogRead(A2);
+int k=360-l;
+Serial.print(k);
+Serial.print('\t');
+delay(500);
+int m=analogRead(A3);
+
+Serial.print(360-m);
+Serial.print('\t');
+delay(500);
+int n=analogRead(A4);
+Serial.print(360-n);
+Serial.println();
+if((k>2) || (k<-80))
+{
+   lcd.setCursor(0, 1);
+   lcd.print("...");
+  for(int i=0;i<5;i++)
+  {
+
+  int b=digitalRead(buttonPin);
+  Serial.println(b);
+  delay(1000);
+   if(b==HIGH && i<5)
+    {
+      break;
+   
+  }
+   if(b==LOW && i==4)
+   {
+   
+    lcd.setCursor(5,0 );
+     lcd.print("YES");
+    lcd.setCursor(0,1 );
+   lcd.print("MSG SENT");
+   Serial.println("ACCIDENT");
+   delay(1000);
+ while(1)
+  {}
+    }
+  
+   tone(9,356);
+ delay(1000);
+ noTone(9);
+ delay(1000);
+ }
+}
+else 
+{
+  Serial.println("no collision");
+    lcd.setCursor(0, 1);
+     lcd.print("NOO");
+   
+}
+
+    buttonState1= digitalRead(buttonPin1);
+while(buttonState1==HIGH)
+{
+int l=analogRead(A2);
+int k=360-l;
+Serial.print(k);
+Serial.print('\t');
+delay(500);
+int m=analogRead(A3);
+
+Serial.print(360-m);
+Serial.print('\t');
+delay(500);
+int n=analogRead(A4);
+Serial.print(360-n);
+Serial.println();
+if((k>2) || (k<-80))
+{
+   lcd.setCursor(0, 1);
+   lcd.print("...");
+  for(int i=0;i<5;i++)
+  {
+
+  int b=digitalRead(buttonPin);
+  Serial.println(b);
+  delay(3000);
+   if(b==HIGH && i<5)
+    {
+      break;
+   
+  }
+   if(b==LOW && i==4)
+   {
+   
+    lcd.setCursor(5,0 );
+     lcd.print("YES");
+    lcd.setCursor(0,1 );
+   lcd.print("MSG SENT");
+   Serial.println("ACC");
+   delay(800);
+  while(1)
+  {}
+    }
+    else
+      tone(9,356);
+ delay(1000);
+ noTone(9);
+ delay(1000);
+    
+   }
+   tone(9,356);
+ delay(1000);
+ noTone(9);
+ delay(1000);
+ }
+
+else 
+{
+  Serial.println("no collision");
+    lcd.setCursor(0, 1);
+     lcd.print("NOO");
+   
+}
+  
+digitalWrite(trigPin, LOW);
+delayMicroseconds(2);
+digitalWrite(trigPin, HIGH);
+delayMicroseconds(10);
+digitalWrite(trigPin, LOW);
+duration = pulseIn(echoPin, HIGH);
+distance= duration*0.034/2;
+//Serial.print("Distance: ");
+Serial.println(distance);
+
+int s = map(a,0,255,0,100);
+//Serial.println(s);
+ //lcd.setCursor(0, 1);
+ //lcd.print(distance);
+    //lcd.print("%");
+    delay(75); 
+    lcd.print(" ");
+if (distance>=20 && distance<35)
+ {
+a=154;
+  analogWrite(3,0);
+  analogWrite(6,a);
+Serial.println("hi");
+ lcd.setCursor(13, 1);
+   lcd.print("%");
+   lcd.setCursor(10, 1);
+   
+   lcd.print(s);
+  
+}
+if (distance>35)
+ {
+a=255;
+  analogWrite(3,0);
+  analogWrite(6,a);
+  
+  lcd.setCursor(10, 1);
+  lcd.print(s);
+
+}
+if (distance<20)
+ {
+a=0;
+  analogWrite(3,a);
+    analogWrite(6,a);
+   lcd.setCursor(10, 1);
+   lcd.print(s);A
+}
+}}
+}
+
+
+  
+   
+  
+ 

@@ -1,0 +1,225 @@
+# LIBRARIES
+ #  for creating pop boxes
+from tkinter import *
+from tkinter import messagebox
+ # for system functions
+import sys
+ # for keyboard automatiom
+import pyautogui as py
+ # for web automation
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+ # for delays,date,&others
+import time
+ #for arduino-pi(computer) serial communication
+import serial
+  # IMAGE CAPTURING
+import cv2
+ # for creating dataframes from .csv file
+import pandas as pd
+ #for calculating distance b/w locations
+from geopy.distance import geodesic as geo
+ #for email sytem
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+from email.mime.image import MIMEImage
+  # messaging API FAST2SMS
+import requests
+
+#global variables
+latitude=0
+longitude=0
+s=serial.Serial('/dev/cu.usbmodem1431',9600) # serial object
+email_user = 'yyyy@gmail.com'  # sender email id
+email_send= 'xxxx@gmail.com'     # reciever email id
+email_password = 'aaxxccsd'          #sender id password
+
+
+
+
+    
+
+
+def currentloc():   #for calculating current location of accident
+    global latitude,longitude
+    chrome_options = Options()
+    chrome_options.add_argument("--use-fake-ui-for-media-stream")
+    timeout = 30
+    print('\007')
+    driver = webdriver.Chrome("/Users/harsimranwadali/Documents/chromedriver")
+    driver.get("https://mycurrentlocation.net/")
+    wait = WebDriverWait(driver, timeout)
+    time.sleep(2)
+    longitude = driver.find_elements_by_xpath('//*[@id="longitude"]')
+    longitude = [x.text for x in longitude]
+    time.sleep(2)
+    longitude = str(longitude[0])
+    latitude = driver.find_elements_by_xpath('//*[@id="latitude"]')
+    latitude = [x.text for x in latitude]
+    latitude = str(latitude[0])
+    time.sleep(2)
+    driver.quit()
+   
+
+def nearestdist(origin):   #for finding nearest hospital from current location
+    df1=pd.read_csv("database2.csv")
+    print(df1)
+    lats=list(df1['LATITUDE'])
+    longs=list(df1['LONGITUDE'])
+    names=list(df1['NAME'])
+    phonenos=list(df1['PHONENOS'])
+    l=len(lats)
+    lis=list(zip(lats,longs))
+    d=[]
+    print('\007')
+    messagebox.showinfo("DISTANCE CALCULATION","CALCULATING NEAREST HOSPITAL LOCATION FROM HOSPITALS DATABASE!!....")
+    a=lambda x:(geo(origin,x).miles)
+    d=list(map(a,lis))
+    d =  [ round(elem, 2) for elem in d ]
+    print(d)
+    s=min(d)
+    i=0
+    while i<l:
+        if s==d[i]:
+            print("THE NEAREST HOSPITAL IS ",names[i])
+            print('\007')
+            messagebox.showinfo(" NEAREST HOSPITAL FOUND ",'THE NEAREST HOSPITAL IS '+names[i])
+            time.sleep(2)
+            print("ITS DISTANCE FROM CURRENT LOCATION IS "+str(s)+" miles")
+            print('\007')
+            messagebox.showinfo("NEAREST DISTANCE","ITS DISTANCE FROM CURRENT LOCATION IS "+str(s)+" miles")
+            time.sleep(2)
+            sms(names[i],origin,phonenos[i])
+            time.sleep(3)
+            print('\007')
+            showloc(origin,(lats[i],longs[i]))   
+            break
+        i=i+1
+     
+    sys.exit()
+        
+def sms(name,origin,phone):  # For sending the SMS notifications along with location link to the nearest Hospital.
+   
+    apikey='KB7uowO9J1MlnicE3hZTFaSr40geIvUy6QmHt2dfqNsGRp8VzCACxgOJ2GQksKfiwb5S1u9nXMF6LzDI'
+    url = "https://www.fast2sms.com/dev/bulk"
+    message="CALL TO "+name+" FOR HELP \n reach asap"
+    querystring = {"authorization":apikey,"sender_id":"FSTSMS","message":message,"language":"english","route":"p","numbers":str(phone)}
+
+    headers = {
+    'cache-control': "no-cache"
+                }
+
+    response = requests.request("GET", url, headers=headers, params=querystring)
+    print(response.text)
+    message1="ACCIDENT OCCURS AT THIS LOCATION--\n https://www.google.com/maps?q="+str(origin[0])+','+str(origin[1])  #msg1 to be sent
+    querystring = {"authorization":apikey,"sender_id":"FSTSMS","message":message1,"language":"english","route":"p","numbers":str(phone)}
+    headers = {
+    'cache-control': "no-cache"
+                }
+
+    response = requests.request("GET", url, headers=headers, params=querystring) 
+    print(response.text)
+    messagebox.showinfo('SMS STATUS','SENDING SMS TO THE NEAREST HOSPITAL('+name+')')  # msg2 to be sent
+    time.sleep(2)
+    print("SMS SENT")
+    time.sleep(1)
+    print('\007')
+    messagebox.showinfo('SMS STATUS','SMS SENT SUCCESSFULLY TO THE NEAREST HOSPITAL')
+    time.sleep(2)
+
+def showloc(origin,destination):# for opening googlemap link which showing the path b/w nearest hospital and the location where accident occurs
+    print(origin)
+    print(destination)
+    driver = webdriver.Chrome("/Users/harsimranwadali/Documents/chromedriver")
+    url='https://www.google.com/maps/dir/?api=1&origin='+str(origin[0])+','+str(origin[1])+"&destination="+str(destination[0])+','+str(destination[1])
+    driver.get(url)
+    time.sleep(2)
+    py.typewrite(['enter'])
+    time.sleep(10)
+    driver.quit()
+    
+
+def imagecapture(): # for capturing image of a Driver  when alcohol content greater than legal limit is found before the car's ignition
+     data= time.strftime("%d_%b_%Y|%H:%M:%S")
+     print(data)
+     camera = cv2.VideoCapture(0)
+     return_value, image = camera.read()
+     cv2.imwrite(str(data)+'.jpg', image)
+     del(camera)
+     messagebox.showinfo("DRUNK AND DRIVE CASE",'IMAGE OF DRUNKEN DRIVER CAPTURED')
+     print('\007')
+     gmail(data)
+
+     
+def gmail(data): #for sending email through gmail along with captured photo of driver
+    mail = MIMEMultipart()
+    mail['From'] =email_user
+    mail['To'] = email_send
+    mail['Subject'] = "ALERT ALERT!!"
+    body = "THE DRIVER DRIVING VEHICLE NO-PB02XXXX IS TOTALLY DRUNKEN .ALSO, PHOTO OF THE DRIVER IS ATTACHED"
+    mail.attach(MIMEText(body, 'plain'))
+    print (data)
+    dat='%s.jpg'%data
+    print (dat)
+    attachment = open(dat, 'rb')
+    image=MIMEImage(attachment.read())
+    attachment.close()
+    mail.attach(image)
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(email_user,email_password )
+    text = mail.as_string()
+    server.sendmail(email_user,email_send, text)
+    messagebox.showinfo('DRUNK AND DRIVE CASE','EMAIL HAS BEEN SUCCESFULLY SENT ALONG WITH IMAGE')
+    print('\007')
+    time.sleep(2)
+    server.quit()
+
+
+
+
+#THE CODE EXECUTION STARTS FROM HERE
+while 1:
+ 
+ if x=='DRUNK:  #signal received serially  from Arduino when Alcohol consumption is sensed by Alcohol sensor
+     print('\007')
+     root=Tk()
+     root.title('ALERTING SYSTEM') 
+     root.geometry('500x300+200+300')
+     label=Label(root,text="IMAGE CAPTURING \n\n SENDING EMAIL THROUGH GMAIL ",bg='red')
+     label.pack(fill=X)
+     messagebox.showinfo('ALCOHOL SENSOR','SIGNAL DETECTED FROM SENSOR')
+     time.sleep(2)
+     imagecapture()
+     root.destroy
+     sys.exit()
+ else:
+  a=s.readline().decode()   #Read the data send by arduino serially and decode it as string value
+  print(a)   
+
+  if 'ACCIDENT' in a:       #signal received from Arduino when Accident occurrence has been sensed by different sensors on the vehicle.
+    print('\007')
+    root=Tk()
+    root.title('ALERTING SYSTEM')
+    root.geometry('500x300+200+300')
+    label=Label(root,text="FINDING CURRENT LOCATION USING WEB AUTOMATION\n CALCULATING NEAREST HOSPITAL FROM DATABASE\nSENDING SMS TO THE NEAREST HOSPITAL\nSHOW THE PATH B/W NEAREST HOSPITAL AND ACCIDENT  LOCATION",bg='red')
+    label.pack(fill=X)
+    messagebox.showinfo('ACCIDENT HAPPENS','COLLISION SIGNAL DETECTED')
+    time.sleep(2)
+    currentloc()
+    origin=(latitude,longitude)
+    messagebox.showinfo("CURRENT LOCATION","LATITUDE--"+str(latitude)+"\nLONGITUDE---"+str(longitude))
+    origin1=(float(origin[0]),float(origin[1]))
+    nearestdist(origin1)
+    root.destroy
+    sys.exit()
+
+    
+    
+      
+     
+     
