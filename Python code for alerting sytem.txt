@@ -104,7 +104,7 @@ def nearestdist(origin):   #for finding nearest hospital from current location
         
 def sms(name,origin,phone):  # For sending the SMS notifications along with location link to the nearest Hospital.
    
-    apikey='KB7uowO9J1MlnicE3hZTFaSr40geIvUy6QmHt2dfqNsGRp8VzCACxgOJ2GQksKfiwb5S1u9nXMF6LzDI'
+    apikey='KB7uowO9QmHt2dXXXXXXXXXXXXXXXXXXXXXXMF6LzDI'
     url = "https://www.fast2sms.com/dev/bulk"
     message="CALL TO "+name+" FOR HELP \n reach asap"
     querystring = {"authorization":apikey,"sender_id":"FSTSMS","message":message,"language":"english","route":"p","numbers":str(phone)}
